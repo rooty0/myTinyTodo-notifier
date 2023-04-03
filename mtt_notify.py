@@ -164,7 +164,8 @@ def main(args=None):
             log.debug(f"ROW: {row}")  # print(row)
             # https://docs.python.org/3/library/datetime.html
             # datetime.strptime('2015-05-16', '%Y-%m-%d')
-            dt_obj = datetime.strptime(row[13], '%Y-%m-%d')
+            dt_obj = datetime.strptime(f"{row[13]} 23:59", '%Y-%m-%d %H:%M')
+            # currently supported: 1. "due" 2. "EXPIRED" . -----> To add support "DUE TODAY" <-----
             message = f"- \"{row[7]}\" {'due' if dt_obj >= datetime.now() else 'EXPIRED'} on {dt_obj:%A, %B %e} ({dt_obj:%m/%d})"
             log.debug(f"LINE: \"{message}\"")
             tasks_duedate.append(message)
