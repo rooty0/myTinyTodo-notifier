@@ -1,0 +1,3 @@
+database_path: /var/www/domain/todolist.db
+pushover_user: xxxxxxxxxx
+pushover_token: xxxxxxxxxx
