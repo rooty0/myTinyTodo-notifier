@@ -25,7 +25,7 @@ DUEDATE_TEMPLATE = '''=== Due date: ===
 # end of Templates
 #
 
-__version__ = 0.4  # alpha
+__version__ = 0.5  # alpha
 log = logging.getLogger('mtt_notify')
 
 TAG_ID = 13  # "ongoing" tag
@@ -165,7 +165,7 @@ def main(args=None):
             # https://docs.python.org/3/library/datetime.html
             # datetime.strptime('2015-05-16', '%Y-%m-%d')
             dt_obj = datetime.strptime(row[13], '%Y-%m-%d')
-            message = f"- \"{row[7]}\" {'EXPIRED' if dt_obj < datetime.now() else 'due'} on {dt_obj:%A, %B %e} ({dt_obj:%m/%d})"
+            message = f"- \"{row[7]}\" {'due' if dt_obj >= datetime.now() else 'EXPIRED'} on {dt_obj:%A, %B %e} ({dt_obj:%m/%d})"
             log.debug(f"LINE: \"{message}\"")
             tasks_duedate.append(message)
 
@@ -188,8 +188,10 @@ def main(args=None):
         if not tasks_duedate and not task_tag:
             return True
 
-        ONGOING_STR = ONGOING_TEMPLATE.replace('%%ONGOING_TASK%%', "\n".join(task_tag))
-        DUEDATE_STR = DUEDATE_TEMPLATE.replace('%%DUEDATE_TASK%%', "\n".join(tasks_duedate))
+        # Todo:
+        #   - check jinja
+        ONGOING_STR = ONGOING_TEMPLATE.replace('%%ONGOING_TASK%%', "\n".join(task_tag)) if task_tag else ''
+        DUEDATE_STR = DUEDATE_TEMPLATE.replace('%%DUEDATE_TASK%%', "\n".join(tasks_duedate)) if tasks_duedate else ''
         BASE_STR = BASE_TEMPLATE.replace('%%ONGOING%%', ONGOING_STR).replace('%%DUE_DATE%%', DUEDATE_STR)
 
         log.debug(f"[*] The notification below is about to send out:\n"
@@ -200,6 +202,9 @@ def main(args=None):
         if args.disable_notify is True:
             log.info("[!] Not notifying because instructed to do so")
         else:
+            # Todo:
+            #   - check html support
+            #   - change priority to "High Priority (1)" (NOT Emergency Priority (2)) when due date is expired
             conn = http.client.HTTPSConnection("api.pushover.net:443")
             conn.request("POST", "/1/messages.json",
                          urllib.parse.urlencode({
