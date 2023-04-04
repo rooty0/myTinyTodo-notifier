@@ -25,7 +25,7 @@ DUEDATE_TEMPLATE = '''=== Due date: ===
 # end of Templates
 #
 
-__version__ = 0.5  # alpha
+__version__ = 0.6  # alpha
 log = logging.getLogger('mtt_notify')
 
 TAG_ID = 13  # "ongoing" tag
@@ -37,16 +37,19 @@ class Configuration:
     config_full_path = ''
     config = []
 
-    def __init__(self, app_name):
+    def __init__(self, app_name, provided_config_path=""):
         self.app_name = app_name
 
-        config_known_paths = [
-            f'{os.getcwd()}/{app_name}.yaml',
-            f'/etc/{app_name}/{app_name}.yaml',
-            f'/etc/{app_name}.yaml',
-            f'/usr/local/etc/{app_name}/{app_name}.yaml',
-            f'/usr/local/etc/{app_name}.yaml',
-        ]
+        if not provided_config_path:
+            config_known_paths = [
+                f'{os.getcwd()}/{app_name}.yaml',
+                f'/etc/{app_name}/{app_name}.yaml',
+                f'/etc/{app_name}.yaml',
+                f'/usr/local/etc/{app_name}/{app_name}.yaml',
+                f'/usr/local/etc/{app_name}.yaml',
+            ]
+        else:
+            config_known_paths = [provided_config_path]
 
         for config_path in config_known_paths:
             if not os.path.exists(config_path):
@@ -116,6 +119,8 @@ def main(args=None):
                         help='do not output general info but errors, useful for crontab')
     parser.add_argument('--disable-notification', dest='disable_notify', action='store_true', default=False,
                         help='do not send actual notification, useful for debugging')
+    parser.add_argument('-c', '--config-path', type=str, dest='config_path', required=False,
+                        help=f'custom configuration file path')
 
     args = parser.parse_args(args)
 
@@ -126,7 +131,7 @@ def main(args=None):
         log.setLevel(logging.DEBUG)
         log.debug("Debug message mode is enabled")
 
-    conf = Configuration('mtt_notify')
+    conf = Configuration('mtt_notify', args.config_path)
     # todo:
     #   conf.defaults({'api': 'api.pushover.net:443'})
     conn = create_connection(conf['database_path'])
