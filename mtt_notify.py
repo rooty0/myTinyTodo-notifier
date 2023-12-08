@@ -186,7 +186,7 @@ def main(args=None):
         rows = cursor.fetchall()
         task_tag = []
 
-        log.info(f"[*] Tagged tasks:")
+        log.info('[*] Tagged tasks:')
         for row in rows:
             log.info(f"Task \"{row[10]}\" has \"{row[14]}\" tag")
             task_tag.append(f"- {row[10]}")
