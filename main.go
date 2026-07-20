@@ -92,13 +92,13 @@ func run() error {
 	if *once {
 		return app.pass(ctx)
 	}
-	return runDaemon(ctx, cfg.Schedule, app)
+	return runDaemon(ctx, cfg.Schedule, cfg.Location, app)
 }
 
-// runDaemon executes a notification pass on the configured cron schedule
-// until the context is cancelled by a signal.
-func runDaemon(ctx context.Context, schedule string, app *app) error {
-	c := cron.New()
+// runDaemon executes a notification pass on the configured cron schedule,
+// evaluated in loc, until the context is cancelled by a signal.
+func runDaemon(ctx context.Context, schedule string, loc *time.Location, app *app) error {
+	c := cron.New(cron.WithLocation(loc))
 	_, err := c.AddFunc(schedule, func() {
 		if err := app.pass(ctx); err != nil {
 			slog.Error("notification pass failed", "error", err)
@@ -110,7 +110,7 @@ func runDaemon(ctx context.Context, schedule string, app *app) error {
 
 	c.Start()
 	if entries := c.Entries(); len(entries) > 0 {
-		slog.Info("daemon started", "schedule", schedule, "next_run", entries[0].Next)
+		slog.Info("daemon started", "schedule", schedule, "timezone", loc, "next_run", entries[0].Next)
 	}
 
 	<-ctx.Done()
@@ -153,6 +153,7 @@ func (a *app) pass(ctx context.Context) error {
 	if b := a.cfg.MyTinyTodo.BasicAuth; b != nil {
 		client.SetBasicAuth(b.User, b.Password)
 	}
+	client.SetLocation(a.cfg.Location)
 	if err := client.Login(ctx); err != nil {
 		return err
 	}
@@ -172,7 +173,7 @@ func (a *app) pass(ctx context.Context) error {
 	}
 	slog.Debug("fetched tasks for due date scan", "count", len(due))
 
-	data := report.Build(ongoing, due, time.Now(), a.cfg.Rules.DueThresholdDays)
+	data := report.Build(ongoing, due, time.Now().In(a.cfg.Location), a.cfg.Rules.DueThresholdDays)
 	if data.Empty() {
 		slog.Info("nothing to report")
 		return nil

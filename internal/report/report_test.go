@@ -52,6 +52,48 @@ func TestBuild(t *testing.T) {
 	}
 }
 
+func TestBuildInConfiguredZone(t *testing.T) {
+	// Regression test: classification must hold when the configured zone
+	// differs from the host's. "now" and the due dates both live in the
+	// configured zone, so a task due today must not be reported as
+	// overdue (or dropped) because of the offset to host local time.
+	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Early morning is the interesting case: in UTC it is still the
+	// previous day, so a zone-naive comparison misclassifies "today".
+	nowTokyo := time.Date(2026, 7, 2, 1, 30, 0, 0, tokyo)
+	dayTokyo := func(y int, m time.Month, d int) time.Time {
+		return time.Date(y, m, d, 0, 0, 0, 0, tokyo)
+	}
+
+	due := []mtt.Task{
+		{Title: "yesterday", Due: dayTokyo(2026, 7, 1)},
+		{Title: "today", Due: dayTokyo(2026, 7, 2)},
+		{Title: "tomorrow", Due: dayTokyo(2026, 7, 3)},
+	}
+
+	data := Build(nil, due, nowTokyo, 7)
+
+	if len(data.Due) != 3 {
+		t.Fatalf("got %d due items, want 3: %+v", len(data.Due), data.Due)
+	}
+	byTitle := map[string]Item{}
+	for _, item := range data.Due {
+		byTitle[item.Title] = item
+	}
+	if item := byTitle["yesterday"]; !item.Overdue || item.DueToday {
+		t.Errorf("yesterday item = %+v, want overdue", item)
+	}
+	if item := byTitle["today"]; item.Overdue || !item.DueToday {
+		t.Errorf("today item = %+v, want due today", item)
+	}
+	if item := byTitle["tomorrow"]; item.Overdue || item.DueToday {
+		t.Errorf("tomorrow item = %+v, want neither", item)
+	}
+}
+
 func TestBuildEmpty(t *testing.T) {
 	data := Build(nil, nil, now, 7)
 	if !data.Empty() {

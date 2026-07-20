@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -16,12 +17,17 @@ const AppName = "mtt_notify"
 type Config struct {
 	MyTinyTodo MyTinyTodo `yaml:"mytinytodo"`
 	Rules      Rules      `yaml:"rules"`
-	// Schedule is a standard 5-field cron expression evaluated in local time.
+	// Schedule is a standard 5-field cron expression evaluated in Location.
 	// It is kept at the top level for now; if rules ever need independent
 	// timing, each rule can grow its own schedule.
-	Schedule     string `yaml:"schedule"`
+	Schedule string `yaml:"schedule"`
+	// Timezone names the IANA zone (e.g. "America/New_York") used for both
+	// the schedule and the due date comparisons. Empty means host local time.
+	Timezone     string `yaml:"timezone"`
 	TemplatePath string `yaml:"template_path"`
 	Notify       Notify `yaml:"notify"`
+	// Location is Timezone resolved at load time.
+	Location *time.Location `yaml:"-"`
 }
 
 // MyTinyTodo describes how to reach the myTinyTodo API.
@@ -154,10 +160,29 @@ func parse(data []byte) (Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return Config{}, fmt.Errorf("parse config: %w", err)
 	}
+	loc, err := resolveLocation(cfg.Timezone)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.Location = loc
 	if err := cfg.validate(); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil
+}
+
+// resolveLocation turns a timezone name into a *time.Location. An empty
+// name means host local time; note that time.LoadLocation("") returns UTC
+// instead, which would silently shift existing installations.
+func resolveLocation(name string) (*time.Location, error) {
+	if name == "" {
+		return time.Local, nil
+	}
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		return nil, fmt.Errorf("invalid timezone %q: %w", name, err)
+	}
+	return loc, nil
 }
 
 func (c Config) validate() error {

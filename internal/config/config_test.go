@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func writeConfig(t *testing.T, content string) string {
@@ -34,6 +35,7 @@ rules:
   ongoing_tag: urgent
   due_threshold_days: 3
 schedule: "0 9 * * *"
+timezone: America/New_York
 template_path: /etc/mtt_notify/message.tmpl
 notify:
   pushover:
@@ -62,6 +64,9 @@ notify:
 				if cfg.Notify.Webhook.Field != "text" {
 					t.Errorf("webhook field = %q", cfg.Notify.Webhook.Field)
 				}
+				if cfg.Location == nil || cfg.Location.String() != "America/New_York" {
+					t.Errorf("location = %v, want America/New_York", cfg.Location)
+				}
 			},
 		},
 		{
@@ -87,7 +92,22 @@ notify:
 				if cfg.Schedule != "30 20 * * *" {
 					t.Errorf("default schedule = %q", cfg.Schedule)
 				}
+				// An empty timezone must mean host local time, not UTC:
+				// time.LoadLocation("") would return UTC and silently
+				// shift the schedule of existing installations.
+				if cfg.Location != time.Local {
+					t.Errorf("default location = %v, want %v", cfg.Location, time.Local)
+				}
 			},
+		},
+		{
+			name: "invalid timezone",
+			yaml: `
+mytinytodo:
+  url: https://todo.example.com
+timezone: Mars/Olympus_Mons
+`,
+			wantErr: `invalid timezone "Mars/Olympus_Mons"`,
 		},
 		{
 			name:    "missing url",

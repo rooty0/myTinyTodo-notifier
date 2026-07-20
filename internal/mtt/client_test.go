@@ -341,17 +341,55 @@ func TestNewClientRejectsBadURL(t *testing.T) {
 }
 
 func TestDueIntToTime(t *testing.T) {
+	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
+		name string
 		in   int
+		loc  *time.Location
 		want time.Time
 	}{
-		{20260702, time.Date(2026, 7, 2, 0, 0, 0, 0, time.Local)},
-		{noDueDate, time.Time{}},
-		{0, time.Time{}},
+		{"local", 20260702, time.Local, time.Date(2026, 7, 2, 0, 0, 0, 0, time.Local)},
+		{"explicit zone", 20260702, tokyo, time.Date(2026, 7, 2, 0, 0, 0, 0, tokyo)},
+		{"no due date", noDueDate, time.Local, time.Time{}},
+		{"zero", 0, time.Local, time.Time{}},
 	}
 	for _, tt := range tests {
-		if got := dueIntToTime(tt.in); !got.Equal(tt.want) {
-			t.Errorf("dueIntToTime(%d) = %v, want %v", tt.in, got, tt.want)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			if got := dueIntToTime(tt.in, tt.loc); !got.Equal(tt.want) {
+				t.Errorf("dueIntToTime(%d, %v) = %v, want %v", tt.in, tt.loc, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTasksUseConfiguredLocation(t *testing.T) {
+	// Due dates must come back as midnight in the client's zone, not the
+	// host's: report.Build compares them against a "today" in the same zone.
+	fake := &fakeServer{password: "secret", tasksJSON: sampleTasks}
+	srv := httptest.NewServer(fake.handler())
+	defer srv.Close()
+
+	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := NewClient(srv.URL, "secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.SetLocation(tokyo)
+	if err := c.Login(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	tasks, err := c.Tasks(context.Background(), -1, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2026, 7, 5, 0, 0, 0, 0, tokyo)
+	if !tasks[0].Due.Equal(want) {
+		t.Errorf("due = %v, want %v", tasks[0].Due, want)
 	}
 }

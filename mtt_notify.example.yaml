@@ -23,8 +23,12 @@ rules:
   # Include tasks due within this many days (overdue tasks always included)
   due_threshold_days: 7
 
-# When to send notifications (standard 5-field cron expression, local time)
+# When to send notifications (standard 5-field cron expression)
 schedule: "30 20 * * *"
+
+# Timezone for the schedule and the due date comparisons (IANA name).
+# Leave empty or omit to use the host's local time.
+timezone: ""
 
 # Optional: custom message template (Go text/template).
 # Leave empty to use the built-in default.

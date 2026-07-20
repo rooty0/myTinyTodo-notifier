@@ -60,7 +60,8 @@ rules:
   ongoing_tag: ongoing            # tasks with this tag are always reported; empty disables
   due_threshold_days: 7           # report tasks due within N days (overdue always included)
 
-schedule: "30 20 * * *"           # when to send notifications (5-field cron expression, local time)
+schedule: "30 20 * * *"           # when to send notifications (5-field cron expression)
+timezone: America/New_York        # IANA zone for the schedule and due dates; empty = host local time
 
 template_path: ""                 # optional custom message template; empty = built-in default
 
@@ -75,6 +76,14 @@ notify:                           # enable any subset
     url: https://hooks.example.com/services/xxx
     field: text                   # JSON field name: "text" for Slack, "content" for Discord
 ```
+
+### Timezone
+
+`timezone` takes an [IANA zone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. `Europe/Berlin`) and applies to both the schedule and the "overdue / due today" comparisons, so a task is due today according to *your* day, not the server's. Leaving it empty or omitting it keeps the host's local time, which is the previous behavior.
+
+The zone is resolved from the system tzdata at startup, and an unknown name aborts with an error instead of being silently ignored. Systems without tzdata installed (a scratch container, for instance) would need the database compiled into the binary via a blank `import _ "time/tzdata"`.
+
+The cron library also honors a `CRON_TZ=` prefix inside the schedule itself (`schedule: "CRON_TZ=Asia/Tokyo 30 20 * * *"`). It overrides `timezone` for the firing time only, leaving the due date comparisons on `timezone` — mixing the two is a good way to confuse yourself, so prefer `timezone` alone.
 
 ## Usage
 

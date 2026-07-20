@@ -28,6 +28,7 @@ type Client struct {
 	basicPass string
 	http      *http.Client
 	token     string
+	loc       *time.Location // zone the due dates are interpreted in
 }
 
 // Task is a single myTinyTodo task in the fields the notifier cares about.
@@ -46,6 +47,14 @@ func (t Task) HasDue() bool { return !t.Due.IsZero() }
 func (c *Client) SetBasicAuth(user, password string) {
 	c.basicUser = user
 	c.basicPass = password
+}
+
+// SetLocation sets the time zone in which task due dates are interpreted.
+// It must match the zone the report is built in, otherwise the due date
+// comparisons are skewed by the offset between the two. Defaults to
+// time.Local.
+func (c *Client) SetLocation(loc *time.Location) {
+	c.loc = loc
 }
 
 // authorize attaches the auth headers common to all requests.
@@ -77,6 +86,7 @@ func NewClient(rawURL, password string) (*Client, error) {
 		base:      base,
 		apiPrefix: base.String() + "/api.php?_path=/",
 		password:  password,
+		loc:       time.Local,
 		http: &http.Client{
 			Jar:     jar,
 			Timeout: 30 * time.Second,
@@ -223,18 +233,21 @@ func (c *Client) Tasks(ctx context.Context, listID int, tag string) ([]Task, err
 		tasks = append(tasks, Task{
 			ID:    t.ID,
 			Title: t.Title,
-			Due:   dueIntToTime(t.DueInt),
+			Due:   dueIntToTime(t.DueInt, c.loc),
 		})
 	}
 	return tasks, nil
 }
 
-func dueIntToTime(v int) time.Time {
+// dueIntToTime converts a YYYYMMDD due date into midnight of that day in
+// loc. The API reports a calendar date, so the zone has to be supplied by
+// the caller rather than assumed.
+func dueIntToTime(v int, loc *time.Location) time.Time {
 	if v <= 0 || v == noDueDate {
 		return time.Time{}
 	}
 	y, m, d := v/10000, (v/100)%100, v%100
-	return time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
+	return time.Date(y, time.Month(m), d, 0, 0, 0, 0, loc)
 }
 
 // endpoint builds the URL of an API route the same way the official web
