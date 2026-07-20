@@ -1,0 +1,27 @@
+---
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - errorlint
+    - nilerr
+    - nilnesserr
+    - durationcheck
+    - copyloopvar
+    - nolintlint
+    - recvcheck
+
+  settings:
+    errcheck:
+      # fmt.Fprint* writes to io.Writer; failures are unrecoverable in a CLI,
+      # so ignoring their return values is intentional and idiomatic.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln

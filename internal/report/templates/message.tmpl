@@ -1,0 +1,14 @@
+Hi,
+
+{{ if .Ongoing -}}
+=== Ongoing tasks: ===
+{{ range .Ongoing -}}
+- {{ .Title }}
+{{ end -}}
+{{ end -}}
+{{ if .Due -}}
+=== Due date: ===
+{{ range .Due -}}
+- "{{ .Title }}" {{ if .Overdue }}EXPIRED{{ else if .DueToday }}DUE TODAY{{ else }}due{{ end }} on {{ .Due.Format "Monday, January 2" }} ({{ .Due.Format "01/02" }})
+{{ end -}}
+{{ end -}}

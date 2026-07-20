@@ -1,3 +1,44 @@
-database_path: /var/www/domain/todolist.db
-pushover_user: xxxxxxxxxx
-pushover_token: xxxxxxxxxx
+---
+# NOTE: this file holds credentials; the notifier refuses to start unless
+# it is inaccessible to group/others, e.g.: chmod 600 mtt_notify.yaml
+
+# myTinyTodo installation to watch
+mytinytodo:
+  # Base URL of the installation (the directory containing api.php)
+  url: https://todo.example.com
+  # Password of the installation; leave empty if none is set
+  password: xxxxxxxxxx
+  # Optional: HTTP Basic Auth, when the installation sits behind a
+  # web-server auth layer (htpasswd etc.)
+  # basic_auth:
+  #   user: xxxxxxxxxx
+  #   password: xxxxxxxxxx
+  # List to query; -1 means all lists
+  list_id: -1
+
+# What to notify about
+rules:
+  # Tasks carrying this tag are always included; empty disables the section
+  ongoing_tag: ongoing
+  # Include tasks due within this many days (overdue tasks always included)
+  due_threshold_days: 7
+
+# When to send notifications (standard 5-field cron expression, local time)
+schedule: "30 20 * * *"
+
+# Optional: custom message template (Go text/template).
+# Leave empty to use the built-in default.
+template_path: ""
+
+# Delivery methods; enable any subset by filling in its section
+notify:
+  # telegram:
+  #   bot_token: "123456:ABC-DEF..."
+  #   chat_id: "123456789"
+  # webhook:
+  #   url: https://hooks.example.com/services/xxx
+  #   # JSON field name for the message: "text" for Slack, "content" for Discord
+  #   field: message
+  pushover:
+    user: xxxxxxxxxx
+    token: xxxxxxxxxx

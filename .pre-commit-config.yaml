@@ -1,0 +1,18 @@
+---
+minimum_pre_commit_version: "4.6.0"
+repos:
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: "3.6.1"
+    hooks:
+      - id: editorconfig-checker
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        args: ["--strict", "--config-data={extends: default, rules: {line-length: disable}}"]

@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# PROVIDE: mtt_notify
+# REQUIRE: NETWORKING DAEMON
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name=mtt_notify
+rcvar=mtt_notify_enable
+
+load_rc_config $name
+: ${mtt_notify_enable:="NO"}
+: ${mtt_notify_user:="nobody"}
+
+pidfile="/var/run/${name}.pid"
+procname="/usr/local/bin/mtt_notify"
+command="/usr/sbin/daemon"
+# rc.subr runs the command as ${mtt_notify_user} (a ${name}_user built-in)
+command_args="-S -T ${name} -p ${pidfile} ${procname}"
+start_precmd="${name}_precmd"
+
+# the pidfile is written by the unprivileged user, so pre-create it as root
+mtt_notify_precmd()
+{
+	install -o "${mtt_notify_user}" /dev/null "${pidfile}"
+}
+
+run_rc_command "$1"

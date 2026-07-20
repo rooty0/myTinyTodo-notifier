@@ -1,0 +1,12 @@
+[Unit]
+Description=myTinyTodo notifier
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=mtt_notify
+ExecStart=/usr/local/bin/mtt_notify
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
