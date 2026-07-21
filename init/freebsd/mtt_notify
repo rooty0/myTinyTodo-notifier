@@ -4,14 +4,19 @@
 # REQUIRE: NETWORKING DAEMON
 # KEYWORD: shutdown
 
+# rcvar, command, command_args and start_precmd are read by rc.subr, not by
+# this script, so shellcheck cannot see their use; /etc/rc.subr is provided
+# by the OS and is not available to follow at check time.
+# shellcheck disable=SC1091,SC2034
+
 . /etc/rc.subr
 
 name=mtt_notify
 rcvar=mtt_notify_enable
 
 load_rc_config $name
-: ${mtt_notify_enable:="NO"}
-: ${mtt_notify_user:="nobody"}
+: "${mtt_notify_enable:=NO}"
+: "${mtt_notify_user:=nobody}"
 
 pidfile="/var/run/${name}.pid"
 procname="/usr/local/bin/mtt_notify"

@@ -50,7 +50,7 @@ func run() error {
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("myTinyTodo Notifier v%s\n", version)
+		fmt.Printf("myTinyTodo Notifier %s\n", version)
 		return nil
 	}
 
