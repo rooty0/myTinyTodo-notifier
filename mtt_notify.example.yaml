@@ -38,10 +38,12 @@ template_path: ""
 notify:
   # telegram:
   #   bot_token: "123456:ABC-DEF..."
+  #   # Numeric chat id, or "@channelname" for a public channel
   #   chat_id: "123456789"
   # webhook:
+  #   # Slack / Mattermost / Discord compatible
   #   url: https://hooks.example.com/services/xxx
-  #   # JSON field name for the message: "text" for Slack, "content" for Discord
+  #   # JSON field carrying the message: "text" for Slack, "content" for Discord
   #   field: message
   pushover:
     user: xxxxxxxxxx

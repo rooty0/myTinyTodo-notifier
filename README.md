@@ -33,7 +33,7 @@ Alternatively, install the `lang/go` meta-port, which provides the unversioned `
 
 ## Configuration
 
-Copy `mtt_notify.example.yaml` to one of the locations below and adjust it (the first existing file wins), or pass a custom location with `--config`:
+Copy [`mtt_notify.example.yaml`](mtt_notify.example.yaml) to one of the locations below and adjust it (the first existing file wins), or pass a custom location with `--config`:
 
 - `./mtt_notify.yaml`
 - `/etc/mtt_notify/mtt_notify.yaml`
@@ -47,35 +47,7 @@ The config file contains credentials, so — like an SSH private key — it must
 chmod 600 mtt_notify.yaml
 ```
 
-```yaml
-mytinytodo:
-  url: https://todo.example.com   # base URL of the installation (directory containing api.php)
-  password: xxxxxxxxxx            # leave empty if the installation has no password
-  basic_auth:                     # optional: HTTP Basic Auth (htpasswd-protected installations)
-    user: xxxxxxxxxx
-    password: xxxxxxxxxx
-  list_id: -1                     # -1 = all lists
-
-rules:
-  ongoing_tag: ongoing            # tasks with this tag are always reported; empty disables
-  due_threshold_days: 7           # report tasks due within N days (overdue always included)
-
-schedule: "30 20 * * *"           # when to send notifications (5-field cron expression)
-timezone: America/New_York        # IANA zone for the schedule and due dates; empty = host local time
-
-template_path: ""                 # optional custom message template; empty = built-in default
-
-notify:                           # enable any subset
-  pushover:
-    user: xxxxxxxxxx
-    token: xxxxxxxxxx
-  telegram:
-    bot_token: "123456:ABC-DEF..."
-    chat_id: "123456789"          # numeric chat id or "@channelname"
-  webhook:
-    url: https://hooks.example.com/services/xxx
-    field: text                   # JSON field name: "text" for Slack, "content" for Discord
-```
+Every option is documented inline in [`mtt_notify.example.yaml`](mtt_notify.example.yaml): the myTinyTodo connection (`url`, `password`, optional `basic_auth`, `list_id`), the reporting `rules` (`ongoing_tag`, `due_threshold_days`), the `schedule` and `timezone`, an optional `template_path`, and the `notify` delivery methods (Pushover, Telegram, webhook). Uncomment the delivery methods you want and fill in the rest.
 
 ### Timezone
 
